@@ -51,7 +51,7 @@ namespace GameStore.Api.Endpoints
             // a logger whose category name appears in every log line so you can filter by it.
             group.MapGet("/{id}", async (int id, GameStoreContext dbContext, ILoggerFactory loggerFactory) =>
             {
-                var logger = loggerFactory.CreateLogger("GamesEndpoints");
+                
                 var game = await dbContext.Games.FindAsync(id);
 
                 if (game is null)
@@ -124,13 +124,6 @@ namespace GameStore.Api.Endpoints
             group.MapPut("/{id}", async(int id, UpdateGameDTO updatedGame, GameStoreContext dbContext) => // here we have two params in handler,
                                                                              // this is because first one is calling the route while second one is for request body
             {
-                // WHY: Same reason as in POST. An update can also change GenreId to one that doesn't
-                // exist. We check this after the NotFound check so a missing game is reported first.
-                if (!await dbContext.Genres.AnyAsync(genre => genre.Id == updatedGame.GenreId))
-            {
-                return Results.BadRequest($"Genre with id {updatedGame.GenreId} does not exist.");
-            }
-
                 var existingGame = await dbContext.Games.FindAsync(id);
 
                 if (existingGame is null)
@@ -139,6 +132,16 @@ namespace GameStore.Api.Endpoints
 
                     return Results.NotFound();
                 }
+                // WHY: Same reason as in POST. An update can also change GenreId to one that doesn't
+                // exist. We check this after the NotFound check so a missing game is reported first.
+                if (!await dbContext.Genres.AnyAsync(genre => genre.Id == updatedGame.GenreId))
+            {
+                return Results.BadRequest($"Genre with id {updatedGame.GenreId} does not exist.");
+            }
+
+                
+
+                
 
                 existingGame.Name = updatedGame.Name;
                 existingGame.GenreId = updatedGame.GenreId;
