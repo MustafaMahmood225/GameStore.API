@@ -1,0 +1,15 @@
+[1mdiff --git a/GameStore.Api/Endpoints/GamesEndpoints.cs b/GameStore.Api/Endpoints/GamesEndpoints.cs[m
+[1mindex 8f9db57..87a2b63 100644[m
+[1m--- a/GameStore.Api/Endpoints/GamesEndpoints.cs[m
+[1m+++ b/GameStore.Api/Endpoints/GamesEndpoints.cs[m
+[36m@@ -171,9 +171,7 @@[m [mnamespace GameStore.Api.Endpoints[m
+ [m
+                 logger.LogInformation("deleted game (id={GameId})", id);[m
+ [m
+[31m-                // WHY: 0 rows deleted means no game had that id, so the client asked for something[m
+[31m-                // that doesn't exist -> 404 Not Found. Otherwise the delete worked -> 204 No Content.[m
+[31m-                // The ternary (condition ? ifTrue : ifFalse) is a compact if/else that returns a value.[m
+[32m+[m[41m                [m
+                 return Results.NoContent();[m
+             });[m
+         }[m
