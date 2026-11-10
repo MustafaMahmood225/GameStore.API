@@ -51,7 +51,7 @@ namespace GameStore.Api.Endpoints
             // a logger whose category name appears in every log line so you can filter by it.
             group.MapGet("/{id}", async (int id, GameStoreContext dbContext, ILoggerFactory loggerFactory) =>
             {
-                var logger = loggerFactory.CreateLogger("GamesEndpoints");
+                
                 var game = await dbContext.Games.FindAsync(id);
 
                 if (game is null)
