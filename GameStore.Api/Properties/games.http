@@ -1,0 +1,32 @@
+GET http://localhost:5250/games
+### //this is necessary to seperate requests
+GET http://localhost:5250/basic
+###
+GET http://localhost:5250/games/4
+###
+POST http://localhost:5250/games
+Content-Type: application/json
+// this line must be empty
+{
+  "name": "super mario bros wonder",
+  "genreId": 5,
+  "price":59.99, 
+  "releaseDate": "2023-10-20"
+}
+###
+PUT http://localhost:5250/games/4
+Content-Type: application/json
+
+{
+    "name": "super mario sisters",
+    "genreId": "1",
+    "price": 29.99,
+    "releaseDate": "2025-10-20"
+  }
+
+###
+DELETE http://localhost:5250/games/4
+
+###
+
+GET http://localhost:5250/genres
