@@ -2,6 +2,7 @@
 using GameStore.Api.Dtos;
 using GameStore.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 // this file will contain our endpoints (GET,POST,etc)
 namespace GameStore.Api.Endpoints
 {
@@ -32,7 +33,10 @@ namespace GameStore.Api.Endpoints
             // WHY: Parameters that aren't in the route are read from the query string, so a request
             // like GET /games?page=2&pageSize=5 fills them in. The "= 1" and "= 10" are defaults,
             // used when the client doesn't send the value.
-            group.MapGet("/", async (GameStoreContext dbContext, int page = 1, int pageSize = 10) => {
+            // "string? name = null" is an optional query parameter. The "?" means it can be null,
+            // so we can tell "client didn't send it" apart from "client sent a value". The default
+            // "= null" is what keeps it optional. Example: GET /games?name=zel
+            group.MapGet("/", async (GameStoreContext dbContext, int page = 1, int pageSize = 10,string? name=null) => {
 
                 // WHY: Never trust client input. page 0 or -3 would make Skip((page - 1) * pageSize)
                 // negative, and pageSize 1,000,000 would defeat the point of paging.
@@ -40,10 +44,25 @@ namespace GameStore.Api.Endpoints
                 page = Math.Max(page, 1); // this means if page is less than 1 it will be set to 1
                 pageSize = Math.Clamp(pageSize, 1, 50); // this means if pageSize is less than 1 it will be set to 1 and if its greater than 50 it will be set to 50
 
-                //CountAsync runs SELECT COUNT(*) so the client knows the total across all pages.
-                var totalCount = await dbContext.Games.CountAsync();
 
-                var games = await dbContext.Games
+                // WHY: Start with "all games" as an IQueryable. This line doesn't touch the database.
+                // It only describes the query, so we can add conditions to it below.
+                IQueryable<Game> query = dbContext.Games;
+
+                if (!string.IsNullOrWhiteSpace(name))// this will check if the name is not null or empty
+                {
+                    // WHY: EF.Functions.Like becomes SQL "LIKE". The % symbols mean "anything", so
+                    // "%zel%" matches any name that contains "zel" anywhere. We use Like instead of
+                    // game.Name.Contains(name) because on SQLite Like ignores upper/lower case for
+                    // English letters, but Contains is case-sensitive. EF Core sends the pattern as
+                    // a parameter, so user input can't inject SQL.
+                    query = query.Where(game => EF.Functions.Like(game.Name, $"%{name}%"));
+                }
+
+                //CountAsync runs SELECT COUNT(*) so the client knows the total across all pages.
+                var totalCount = await query.CountAsync();
+
+                var games = await query
 
                 //Paging needs a stable order. Ordering by Id means each game appears on
                 // exactly one page.
