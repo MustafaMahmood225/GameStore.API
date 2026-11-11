@@ -11,8 +11,8 @@ A small REST API for managing a video game catalogue, built to learn .NET framew
 ## Getting started
 ```bash
 git clone https://github.com/MustafaMahmood225/GameStore.Api.git
-cd GameStore.Api/GameStore.Api
-dotnet run
+cd GameStore.Api
+dotnet run --project GameStore.Api
 ```
 The database is created and migrated automatically on startup.
 
