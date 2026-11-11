@@ -30,3 +30,14 @@ DELETE http://localhost:5250/games/4
 ###
 
 GET http://localhost:5250/genres
+###
+GET http://localhost:5250/games?name=zelda
+###
+GET http://localhost:5250/games?name=ZELDA
+###
+GET http://localhost:5250/games?genreId=2
+###
+GET http://localhost:5250/games?name=ze&genreId=2&page=1&pageSize=5
+###
+GET http://localhost:5250/games?genreId=abc
+###
