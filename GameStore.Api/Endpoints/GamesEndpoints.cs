@@ -29,8 +29,33 @@ namespace GameStore.Api.Endpoints
             // The category name "GamesEndpoints" appears in every log line so you can filter by it.
             var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("GamesEndpoints");
 
-            group.MapGet("/", async (GameStoreContext dbContext) => await dbContext.Games
-        
+            // WHY: Parameters that aren't in the route are read from the query string, so a request
+            // like GET /games?page=2&pageSize=5 fills them in. The "= 1" and "= 10" are defaults,
+            // used when the client doesn't send the value.
+            group.MapGet("/", async (GameStoreContext dbContext, int page = 1, int pageSize = 10) => {
+
+                // WHY: Never trust client input. page 0 or -3 would make Skip((page - 1) * pageSize)
+                // negative, and pageSize 1,000,000 would defeat the point of paging.
+                // Math.Max keeps page at 1 or more. Math.Clamp keeps pageSize between 1 and 50.
+                page = Math.Max(page, 1); // this means if page is less than 1 it will be set to 1
+                pageSize = Math.Clamp(pageSize, 1, 50); // this means if pageSize is less than 1 it will be set to 1 and if its greater than 50 it will be set to 50
+
+                //CountAsync runs SELECT COUNT(*) so the client knows the total across all pages.
+                var totalCount = await dbContext.Games.CountAsync();
+
+                var games = await dbContext.Games
+
+                //Paging needs a stable order. Ordering by Id means each game appears on
+                // exactly one page.
+                .OrderBy(game => game.Id)
+
+                // WHY: Page 1 skips 0 rows, page 2 skips pageSize rows, page 3 skips 2 * pageSize...
+                .Skip((page - 1) * pageSize)
+
+                // WHY: Take limits how many rows come back. EF Core turns Skip and Take into SQL
+                // (LIMIT and OFFSET in SQLite), so the database does the slicing and your app
+                // never loads the extra rows.
+                .Take(pageSize)
             .Select(game => new GameSummaryDTO( // we want to project to user the elements not show it exactly as is
                         game.Id,
                         game.Name,
@@ -39,8 +64,10 @@ namespace GameStore.Api.Endpoints
                         game.ReleaseDate
                 ))
             .AsNoTracking()// this will make query faster since program doesnt need to track this
-            .ToListAsync());// instead of calling app can call group,
-                                                // benefit of this is we dont have to specify /games
+            .ToListAsync();
+
+                return new PagedResponse<GameSummaryDTO>(games, page, pageSize, totalCount);
+            });
 
 
             // GET /games/1
