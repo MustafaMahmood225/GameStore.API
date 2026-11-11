@@ -36,7 +36,8 @@ namespace GameStore.Api.Endpoints
             // "string? name = null" is an optional query parameter. The "?" means it can be null,
             // so we can tell "client didn't send it" apart from "client sent a value". The default
             // "= null" is what keeps it optional. Example: GET /games?name=zel
-            group.MapGet("/", async (GameStoreContext dbContext, int page = 1, int pageSize = 10,string? name=null) => {
+            group.MapGet("/", async (GameStoreContext dbContext, int page = 1, int pageSize = 10,
+                string? name=null, int? genreId=null) => {
 
                 // WHY: Never trust client input. page 0 or -3 would make Skip((page - 1) * pageSize)
                 // negative, and pageSize 1,000,000 would defeat the point of paging.
@@ -59,7 +60,14 @@ namespace GameStore.Api.Endpoints
                     query = query.Where(game => EF.Functions.Like(game.Name, $"%{name}%"));
                 }
 
-                //CountAsync runs SELECT COUNT(*) so the client knows the total across all pages.
+
+
+                if (genreId.HasValue)// this will check if the genreId is not null
+                {
+                    query = query.Where(game => game.GenreId == genreId.Value);
+                }
+
+                    //CountAsync runs SELECT COUNT(*) so the client knows the total across all pages.
                 var totalCount = await query.CountAsync();
 
                 var games = await query
