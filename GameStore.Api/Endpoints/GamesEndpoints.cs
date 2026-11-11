@@ -40,7 +40,10 @@ namespace GameStore.Api.Endpoints
                 page = Math.Max(page, 1); // this means if page is less than 1 it will be set to 1
                 pageSize = Math.Clamp(pageSize, 1, 50); // this means if pageSize is less than 1 it will be set to 1 and if its greater than 50 it will be set to 50
 
-                return await dbContext.Games
+                //CountAsync runs SELECT COUNT(*) so the client knows the total across all pages.
+                var totalCount = await dbContext.Games.CountAsync();
+
+                var games = await dbContext.Games
 
                 //Paging needs a stable order. Ordering by Id means each game appears on
                 // exactly one page.
@@ -62,8 +65,9 @@ namespace GameStore.Api.Endpoints
                 ))
             .AsNoTracking()// this will make query faster since program doesnt need to track this
             .ToListAsync();
-            });// instead of calling app can call group,
-                                                // benefit of this is we dont have to specify /games
+
+                return new PagedResponse<GameSummaryDTO>(games, page, pageSize, totalCount);
+            });
 
 
             // GET /games/1
