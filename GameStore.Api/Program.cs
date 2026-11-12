@@ -2,6 +2,7 @@ using GameStore.Api.Data;
 using GameStore.Api.Endpoints;
 using Scalar.AspNetCore;
 using Serilog;
+using GameStore.Api.Services;
 
 // WHY: We removed "using GenresEnpoints" (it had a typo) because GenresEndpoints now lives
 // in the GameStore.Api.Endpoints namespace — the same one already imported above.
@@ -30,6 +31,11 @@ builder.Services.AddValidation();
 builder.Services.AddProblemDetails();
 
 builder.AddGameStoreDb();
+
+// Tells dependency injection "when something asks for IGamesService, create a
+// GamesService". AddScoped means one instance per HTTP request, which is required
+// because GamesService depends on the scoped GameStoreContext.
+builder.Services.AddScoped<IGamesService, GamesService>();
 
 var app = builder.Build();
 
