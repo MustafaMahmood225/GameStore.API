@@ -3,10 +3,7 @@ using GameStore.Api.Endpoints;
 using Scalar.AspNetCore;
 using Serilog;
 using GameStore.Api.Services;
-
-// WHY: We removed "using GenresEnpoints" (it had a typo) because GenresEndpoints now lives
-// in the GameStore.Api.Endpoints namespace — the same one already imported above.
-// Keeping one consistent namespace means fewer using statements and less confusion.
+using GameStore.Api.ExceptionHandlers;
 
 // The builder object is used to configure services for the program.
 var builder = WebApplication.CreateBuilder(args);
@@ -30,11 +27,27 @@ builder.Services.AddValidation();
 // This makes errors easy for clients (mobile apps, React, etc.) to parse and display.
 builder.Services.AddProblemDetails();
 
+
+// WHY: Registers the handler with dependency injection. UseExceptionHandler() (already
+// in your pipeline) finds every registered IExceptionHandler and calls them in order.
+// Without this line the class exists but nothing ever calls it.
+builder.Services.AddExceptionHandler<BadHttpRequestExceptionHandler>();
+
 builder.AddGameStoreDb();
 
 // Tells dependency injection "when something asks for IGamesService, create a
 // GamesService". AddScoped means one instance per HTTP request, which is required
 // because GamesService depends on the scoped GameStoreContext.
+
+// Dependency Injection (DI) is a design pattern where a class receives its required tools (dependencies)
+// from an external container (service container) rather than creating them itself.
+// This approach decouples your code, making it easier to swap out dependencies,
+// manage configurations centrally in Program.cs, and safely mock external services during testing.
+
+// The container also needs to know how long each tool should live:
+// - Transient:  A brand new instance is created every time a class asks for it.
+// - Scoped:     A new instance is created once per HTTP request, shared within that request.
+// - Singleton:  A single instance is created once and shared by everyone for the app's lifetime.
 builder.Services.AddScoped<IGamesService, GamesService>();
 
 var app = builder.Build();
@@ -58,15 +71,6 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-// Dependency Injection (DI) is a design pattern where a class receives its required tools (dependencies)
-// from an external container (service container) rather than creating them itself.
-// This approach decouples your code, making it easier to swap out dependencies,
-// manage configurations centrally in Program.cs, and safely mock external services during testing.
-
-// The container also needs to know how long each tool should live:
-// - Transient:  A brand new instance is created every time a class asks for it.
-// - Scoped:     A new instance is created once per HTTP request, shared within that request.
-// - Singleton:  A single instance is created once and shared by everyone for the app's lifetime.
 
 app.MapGamesEndpoints();
 app.MapGenresEndpoints();
