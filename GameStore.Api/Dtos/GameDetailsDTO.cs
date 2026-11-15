@@ -7,7 +7,7 @@
     (
         int Id,
         string Name,
-        int Genre, // only difference between this and gamedto is this returns int
+        int GenreId, // only difference between this and gamedto is this returns int
         decimal Price,
         DateOnly ReleaseDate
     );
