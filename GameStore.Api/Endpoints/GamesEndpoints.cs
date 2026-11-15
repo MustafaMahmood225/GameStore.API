@@ -3,7 +3,7 @@ using GameStore.Api.Services;
 // this file will contain our endpoints (GET,POST,etc)
 namespace GameStore.Api.Endpoints
 {
-    // static so it can keep its value across multiple fucntion calls instead of 
+    // static so it can keep its value across multiple function calls instead of 
     // being removed and re created each time
     public static class GamesEndpoints
     {

@@ -52,6 +52,15 @@ builder.Services.AddScoped<IGamesService, GamesService>();
 
 var app = builder.Build();
 
+
+// WHY: By default ASP.NET writes several log lines per request. This middleware replaces
+// them with a single summary line, such as "HTTP GET /games responded 200 in 12.3 ms".
+// It goes before UseExceptionHandler so it wraps it: the exception handler turns an
+// exception into a response first, and this middleware then logs the final status.
+// A bad request is logged as 400, and a real crash is still logged as 500.
+app.UseSerilogRequestLogging();
+
+
 // WHY: UseExceptionHandler() is middleware — it sits between the client and your endpoints
 // and catches any unhandled exception, returning a clean JSON error response instead of crashing.
 // WHY: UseStatusCodePages() converts bare HTTP errors (like a plain 404) into the same
@@ -59,11 +68,7 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-// WHY: By default ASP.NET writes several log lines per request. This middleware replaces
-// them with a single summary line, such as "HTTP GET /games responded 200 in 12.3 ms".
-// It goes after UseExceptionHandler so that crashed requests are logged as 500 and not
-// as success.
-app.UseSerilogRequestLogging();
+
 
 if (app.Environment.IsDevelopment())
 {
