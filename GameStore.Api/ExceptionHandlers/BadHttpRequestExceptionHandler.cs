@@ -10,7 +10,7 @@ namespace GameStore.Api.ExceptionHandlers
     // that writes problem-details responses.
     public class BadHttpRequestExceptionHandler(
         IProblemDetailsService problemDetailsService,
-        ILogger<BadHttpRequestException> logger) : IExceptionHandler
+        ILogger<BadHttpRequestExceptionHandler> logger) : IExceptionHandler
     {
         public async ValueTask<bool> TryHandleAsync (HttpContext context, Exception exception, CancellationToken cancellationToken)
         {
