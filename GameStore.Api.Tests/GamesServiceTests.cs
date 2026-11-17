@@ -2,6 +2,7 @@
 using GameStore.Api.Dtos;
 using GameStore.Api.Models;
 using GameStore.Api.Services;
+using Microsoft.AspNetCore.Mvc.TagHelpers.Cache;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -147,6 +148,65 @@ namespace GameStore.Api.Tests
             Assert.Equal(2, result.TotalCount); // 2, not 3: the count is taken AFTER filtering
 
             Assert.All(result.Items, game => Assert.Equal("Fighting", game.Genre));
+        }
+
+        [Fact]
+        public async Task DeleteGameAsync_MissingGame_ReturnsFalse()
+        {
+            var result = await _service.DeleteGameAsync(123); // no game with that Id
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task UpdateGameAsync_MissingGame_ReturnsNotFound()
+        {
+            var result = await _service.UpdateGameAsync(123, new UpdateGameDTO(
+                "Game 67",
+                _figthing.Id,
+                59.99m,
+                new DateOnly(2000, 1, 1)));
+
+            Assert.Equal(UpdateGameResult.NotFound, result); // should return NotFound because the game doesn't exist
+        }
+
+        [Fact]
+        public async Task CreateGameAsync_UnknownGenre_ReturnsNull()
+        {
+            var result = await _service.CreateGameAsync(new CreateGameDTO(
+                "Game 62",
+                123, // no genre with that Id
+                59.99m,
+                new DateOnly(2000, 1, 1)));
+
+            Assert.Null(result); // should return null because the genre doesn't exist
+        }
+
+        [Fact]
+        public async Task DeleteGameAsync_ExistingGame_ReturnsTrue_AndRemovesIt()
+        {
+            AddGames(_figthing, "Mortal Kombat", "Tekken");
+            AddGames(_rpg, "Final Fantasy", "Dragon Quest");
+
+            var result = await _service.DeleteGameAsync(1); // delete the first game (Mortal Kombat)
+            var result2 = await _service.GetGamesAsync(1, 10, null, null); // get all games
+
+            Assert.True(result); // should return true because the game was deleted
+            Assert.Equal(3, result2.TotalCount); // should have 3 games left
+        }
+
+        [Fact]
+        public async Task UpdateGameAsync_UnknownGenre_ReturnsInvalidGenre_AndChangesNothing()
+        {
+            AddGames(_rpg, "The Elder Scrolls V Skyrim");
+
+            var result = await _service.UpdateGameAsync(1, new UpdateGameDTO(
+                "The Elder Scrolls V Skyrim",
+                999, // no genre with that Id
+                59.99m,
+                new DateOnly(2000, 1, 1)));
+
+            Assert.Equal(UpdateGameResult.InvalidGenre, result); // should return InvalidGenre because the genre doesn't exist
         }
 
     }
