@@ -1,5 +1,9 @@
 # GameStore API
 
+[![CI]
+(https://github.com/MustafaMahmood225/GameStore.API/actions/workflows/ci.yml/badge.svg)]
+(https://github.com/MustafaMahmood225/GameStore.API/actions/workflows/ci.yml)
+
 A small REST API for managing a video game catalogue, built to learn .NET.
 
 ## Tech stack
