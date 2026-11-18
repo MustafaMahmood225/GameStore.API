@@ -215,7 +215,7 @@ namespace GameStore.Api.Tests
 
             var saved = await _dbContext.Games.SingleAsync(game => game.Id == id);
 
-            Assert.NotEqual("The Elder Scrolls V Skyrim", saved.Name); // should return true since name should be the same
+            Assert.Equal("The Elder Scrolls V Skyrim", saved.Name); // should return true since name should be the same
         }
 
     }
