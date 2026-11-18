@@ -2,7 +2,6 @@
 using GameStore.Api.Dtos;
 using GameStore.Api.Models;
 using GameStore.Api.Services;
-using Microsoft.AspNetCore.Mvc.TagHelpers.Cache;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -188,11 +187,13 @@ namespace GameStore.Api.Tests
             AddGames(_figthing, "Mortal Kombat", "Tekken");
             AddGames(_rpg, "Final Fantasy", "Dragon Quest");
 
-            var result = await _service.DeleteGameAsync(1); // delete the first game (Mortal Kombat)
-            var result2 = await _service.GetGamesAsync(1, 10, null, null); // get all games
+            var id = (await _dbContext.Games.SingleAsync(game => game.Name== "Mortal Kombat")).Id; // get the id of mortal
+
+            var result = await _service.DeleteGameAsync(id); // delete the first game (Mortal Kombat)
 
             Assert.True(result); // should return true because the game was deleted
-            Assert.Equal(3, result2.TotalCount); // should have 3 games left
+            Assert.DoesNotContain(_dbContext.Games, game => game.Name == "Mortal Kombat"); // should not contain the deleted game
+            Assert.Equal(3, _dbContext.Games.Count()); // should have 3 games left
         }
 
         [Fact]
@@ -200,13 +201,21 @@ namespace GameStore.Api.Tests
         {
             AddGames(_rpg, "The Elder Scrolls V Skyrim");
 
-            var result = await _service.UpdateGameAsync(1, new UpdateGameDTO(
-                "The Elder Scrolls V Skyrim",
+            var id = (await _dbContext.Games.SingleAsync(game => game.Name == "The Elder Scrolls V Skyrim")).Id;
+
+            var result = await _service.UpdateGameAsync(id, new UpdateGameDTO(
+                "The Elder Scrolls IV Oblivion",
                 999, // no genre with that Id
                 59.99m,
                 new DateOnly(2000, 1, 1)));
 
             Assert.Equal(UpdateGameResult.InvalidGenre, result); // should return InvalidGenre because the genre doesn't exist
+
+            _dbContext.ChangeTracker.Clear(); // clear the cache so we can see if the game was changed in the database
+
+            var saved = await _dbContext.Games.SingleAsync(game => game.Id == id);
+
+            Assert.Equal("The Elder Scrolls V Skyrim", saved.Name); // should return true since name should be the same
         }
 
     }
